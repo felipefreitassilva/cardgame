@@ -155,8 +155,8 @@ public class FXPokemon {
         for (int i = 0; i < 3; i++) {
             Pokemon pokemon = getTrainer1Pokemon()[i];
             trainer1PokemonBaseInfo[i] = pokemon.getName() +
-                    " " + pokemon.getNumber() + "  -" +
-                    "  " + pokemon.getType();
+                    " " + pokemon.getNumber() +
+                    " - " + pokemon.getType();
         }
 
         return trainer1PokemonBaseInfo;
@@ -178,7 +178,7 @@ public class FXPokemon {
             Pokemon pokemon = getTrainer2Pokemon()[i];
             trainer2PokemonBaseInfo[i] = pokemon.getName() +
                     " nº" + pokemon.getNumber() +
-                    "  -  " + pokemon.getType();
+                    " - " + pokemon.getType();
         }
 
         return trainer2PokemonBaseInfo;
