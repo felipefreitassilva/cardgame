@@ -19,7 +19,8 @@ public class FXPokemon {
     private Pokemon[] pokemons;
     private Image pokemonImage;
     private ImageView pokemonImageView;
-    private Button button;
+    private Button buttonBaseAttack;
+    private Button buttonSpecialAttack;
     private Label label;
     private Label HPLabelText;
     private ProgressBar HPProgressBar;
@@ -52,33 +53,39 @@ public class FXPokemon {
             pokemonImageView.setFitHeight(200);
             cardElements.add(pokemonImageView);
 
-            /** Include buttons for pokemon */
-            button = new Button();
-            button.setText("Ataque Básico");
-            button.setPrefWidth(150);
-            button.setPrefHeight(25);
+            /** Include buttons for pokemon base attack */
+            buttonBaseAttack = new Button();
+            buttonBaseAttack.setText("Ataque Básico");
+            buttonBaseAttack.setId(Integer.toString(i));
+            buttonBaseAttack.setOnMousePressed(event -> setAttacker(buttonBaseAttack));
+            buttonBaseAttack.setPrefWidth(150);
+            buttonBaseAttack.setPrefHeight(25);
+            
             if (i < 3) {
-                button.setLayoutX(260 + i * 200);
-                button.setLayoutY(260);
+                buttonBaseAttack.setLayoutX(260 + i * 200);
+                buttonBaseAttack.setLayoutY(260);
             } else {
-                button.setLayoutX(260 + (i - 3) * 200);
-                button.setLayoutY(560);
+                buttonBaseAttack.setLayoutX(260 + (i - 3) * 200);
+                buttonBaseAttack.setLayoutY(560);
             }
-            cardElements.add(button);
+            cardElements.add(buttonBaseAttack);
 
-            button = new Button();
-            button.setPrefWidth(150);
-            button.setPrefHeight(25);
+            /** Include buttons for pokemon special attack */
+            buttonSpecialAttack = new Button();
+            buttonSpecialAttack.setPrefWidth(150);
+            buttonSpecialAttack.setPrefHeight(25);
+            buttonSpecialAttack.setId(Integer.toString(i));
+            buttonBaseAttack.setOnMousePressed(event -> setDefender(buttonSpecialAttack));
             if (i < 3) {
-                button.setText(getTrainer1Pokemon()[i].getSpecialAttack().getName());
-                button.setLayoutX(260 + i * 200);
-                button.setLayoutY(300);
+                buttonSpecialAttack.setText(getTrainer1Pokemon()[i].getSpecialAttack().getName());
+                buttonSpecialAttack.setLayoutX(260 + i * 200);
+                buttonSpecialAttack.setLayoutY(300);
             } else {
-                button.setText(getTrainer2Pokemon()[i - 3].getSpecialAttack().getName());
-                button.setLayoutX(260 + (i - 3) * 200);
-                button.setLayoutY(600);
+                buttonSpecialAttack.setText(getTrainer2Pokemon()[i - 3].getSpecialAttack().getName());
+                buttonSpecialAttack.setLayoutX(260 + (i - 3) * 200);
+                buttonSpecialAttack.setLayoutY(600);
             }
-            cardElements.add(button);
+            cardElements.add(buttonSpecialAttack);
 
             /** Include static label for pokemon */
             label = new Label();
@@ -138,6 +145,14 @@ public class FXPokemon {
         }
 
         return cardElements;
+    }
+
+    private void setAttacker(Button button) {
+        System.out.println(pokemons[Integer.parseInt(button.getId())]);
+    }
+
+    private void setDefender(Button button) {
+        System.out.println(pokemons[Integer.parseInt(button.getId())]);
     }
 
     private Pokemon[] getTrainer1Pokemon() {

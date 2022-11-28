@@ -88,7 +88,7 @@ public class App extends Application {
         // true,
         // true,
         // false))));
-        stage.setScene(new Scene(root, 1366, 768, Color.RED));
+        stage.setScene(new Scene(root, 1280, 720));
         stage.show();
     }
 

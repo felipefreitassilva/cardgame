@@ -36,6 +36,12 @@ public class Pokemon extends Card implements IPokemon {
         return attacks[1];
     }
 
+    public void receberDano(Pokemon enemy, Attack attack) {
+        healthPoints -= hasAdvantage(enemy) * attack.getPower();
+        if (healthPoints < 0)
+            healthPoints = 0;
+    }
+
     public void receberDano(int amount) {
         healthPoints -= amount;
         if (healthPoints < 0)
@@ -57,25 +63,22 @@ public class Pokemon extends Card implements IPokemon {
     }
 
     public double hasAdvantage(Pokemon pokemon) {
-        if (this.type == pokemon.getType())
-            return 1;
-
         if (this.type == pokemon.getWeakness())
             return 1.5;
 
         if (this.weakness == pokemon.getType())
             return 0.5;
 
-        return 0;
+        return 1;
     }
 
     @Override
     public String toString() {
-        return (name + " (Nº " + number + ")" +
-                "\nHP" + healthPoints +
-                "\nType: " + type +
+        return (name + " (No " + number + ")" +
+                "\tType: " + type +
                 "\nAttacks: " +
                 "\n\t" + attacks[0] +
-                "\n\t" + attacks[1]);
+                "\n\t" + attacks[1] +
+                "\nHP: " + healthPoints);
     }
 }
