@@ -2,7 +2,6 @@ package poo.trabalhofinal.felipefreitas_gabrielferreira_luizaheller_mariaeduarda
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
-import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -17,8 +16,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +32,7 @@ public class App extends Application {
     private Label finalLabel = new Label();
     private Button restartButton = new Button();
 
-    /** Stage Grid */
+    /** Main Stage Grid */
     private static final int TRAINER1_BASELINE = 110;
     private static final int TRAINER2_BASELINE = 430;
     private static final int CARDS_SPACE_BETWEEN = 220;
@@ -51,11 +49,11 @@ public class App extends Application {
 
     /** Round Variables */
     private int nroRodada = 1;
-    private Attack attack;
     private Pokemon attacker;
+    private Attack attack;
     private Pokemon defender;
 
-    /** Pokemons JavaFX components */
+    /** Pokemons' JavaFX components */
     private ImageView[] ivCardBacks = new ImageView[4];
     private Label labelTrainer;
     private Label[] labels = new Label[6];
@@ -76,7 +74,7 @@ public class App extends Application {
     private Label[] errorLabels = new Label[5];
 
     @Override
-    public void start(Stage primaryStage) throws IOException {
+    public void start(Stage primaryStage) throws FileNotFoundException {
         /** Included Pokeball Icon to Game Window */
         stage.getIcons().add(Util.generateImage("icon.png"));
         stage.setTitle("Pokemon Card Game");
@@ -120,7 +118,7 @@ public class App extends Application {
         }
 
         /** Include pokemon for both players */
-        Scanner reader = new Scanner(new File(Util.ASSETS_PATH + "/pokemons.txt"));
+        Scanner reader = new Scanner(Util.getRandomFile());
         for (int i = 0; i < 6; i++) {
             String line = reader.nextLine();
             String[] lineContent = line.split(",");
@@ -620,7 +618,7 @@ public class App extends Application {
             root = new AnchorPane();
             nroRodada = 1;
             start(stage);
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
