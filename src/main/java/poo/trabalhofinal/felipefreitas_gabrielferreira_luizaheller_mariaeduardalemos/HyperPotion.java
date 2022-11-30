@@ -2,6 +2,6 @@ package poo.trabalhofinal.felipefreitas_gabrielferreira_luizaheller_mariaeduarda
 
 public class HyperPotion extends Potion {
     public HyperPotion() {
-        super("Hiper Pocao", "hyperPotion.png", 75, "Roxa");
+        super("Hiper Pocao", "hiperPocao.png", 75, "Roxa");
     }
 }
