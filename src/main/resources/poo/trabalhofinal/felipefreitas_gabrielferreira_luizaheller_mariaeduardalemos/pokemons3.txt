@@ -1,0 +1,6 @@
+653,Fennekin,Fire,Water,Ember
+393,Piplup,Water,Grass,Bubbles
+254,Sceptile,Grass,Fire,Bullet Seed
+259,Marshtomp,Water,Grass,Surf
+391,Monferno,Fire,Water,Flamethrower
+389,Torterra,Grass,Fire,Solar Beam
