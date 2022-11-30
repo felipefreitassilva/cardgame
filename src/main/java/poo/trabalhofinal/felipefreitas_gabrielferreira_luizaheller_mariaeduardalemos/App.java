@@ -65,6 +65,7 @@ public class App extends Application {
 
     private Label noPokemonSelectedError;
     private Label noPotionAvailableError;
+    private Label noEnergyAvailableError;
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -81,7 +82,7 @@ public class App extends Application {
         rulesLabel.setLayoutY(680);
         rulesLabel.setPrefHeight(15);
         rulesLabel.setCursor(Cursor.HAND);
-        ImageView rulesImg = new ImageView(Util.generateImage("rules.jpg"));
+        ImageView rulesImg = new ImageView(Util.generateImage("regras_pokemon.jpg"));
         VBox rulesRoot = new VBox();
         Button backButton = new Button();
         backButton.setText("Voltar");
@@ -147,16 +148,25 @@ public class App extends Application {
         /** Include label warnings */
         noPokemonSelectedError = new Label();
         noPokemonSelectedError.setText("Favor selecionar o pokemon.");
-        noPokemonSelectedError.setLayoutX(30);
+        noPokemonSelectedError.setLayoutX(20);
         noPokemonSelectedError.setLayoutY(500);
+        noPokemonSelectedError.setTextFill(Color.RED);
         noPokemonSelectedError.setVisible(false);
         include(noPokemonSelectedError);
         noPotionAvailableError = new Label();
         noPotionAvailableError.setText("Você não tem poções disponíveis.");
-        noPotionAvailableError.setLayoutX(30);
-        noPotionAvailableError.setLayoutY(530);
+        noPotionAvailableError.setLayoutX(20);
+        noPotionAvailableError.setLayoutY(520);
+        noPotionAvailableError.setTextFill(Color.RED);
         noPotionAvailableError.setVisible(false);
         include(noPotionAvailableError);
+        noEnergyAvailableError = new Label();
+        noEnergyAvailableError.setText("Você não tem energia suficiente.");
+        noEnergyAvailableError.setLayoutX(20);
+        noEnergyAvailableError.setLayoutY(540);
+        noEnergyAvailableError.setTextFill(Color.RED);
+        noEnergyAvailableError.setVisible(false);
+        include(noEnergyAvailableError);
 
         stage.setScene(new Scene(root, 1280, 720));
         stage.show();
@@ -330,6 +340,7 @@ public class App extends Application {
                     if (energy == null)
                         cardNull = true;
                     else {
+                        energy.setId(energy.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
                         currentCard = new ImageView(Util.generateImage(energy.getImageName()));
                         currentCard.setId(energy.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
                         playersEnergies.get(getCurrentTrainer()).add(energy);
@@ -339,6 +350,7 @@ public class App extends Application {
                     if (potion == null)
                         cardNull = true;
                     else {
+                        potion.setId(potion.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
                         currentCard = new ImageView(Util.generateImage(potion.getImageName()));
                         currentCard.setId(potion.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
                         playersPotions.get(getCurrentTrainer()).add(potion);
@@ -376,12 +388,43 @@ public class App extends Application {
 
     private void handleSpecialAttackClick(Button button) {
         int id = Integer.parseInt(button.getId().split(" ")[1]);
-        attacker = pokemons[id];
-        attack = attacker.getSpecialAttack();
+        Energy energy = null;
+        for (Energy e : playersEnergies.get(getCurrentTrainer())) {
+            switch (e.getName()) {
+                case "Energia de Fogo":
+                    energy = e;
+                    break;
 
-        for (Label label : labels)
-            label.setTextFill(Color.BLACK);
-        labels[id].setTextFill(Color.RED);
+                case "Energia de Agua":
+                    energy = e;
+                    break;
+
+                case "Energia de Grama":
+                    energy = e;
+                    break;
+
+                default:
+                    System.out.println("e => Tenho uma " + e);
+                    break;
+            }
+        }
+        if (energy == null)
+            noEnergyAvailableError.setVisible(true);
+        else {
+            attacker = pokemons[id];
+            attack = attacker.getSpecialAttack();
+
+            for (Label label : labels)
+                label.setTextFill(Color.BLACK);
+            labels[id].setTextFill(Color.RED);
+
+            for (int i = 0; i < playersHand.get(getNextTrainer()).size(); i++)
+                if (playersHand.get(getNextTrainer()).get(i).getId().equals(energy.getId())) {
+                    playersHand.get(getNextTrainer()).get(i).setVisible(false);
+                    playersHand.get(getNextTrainer()).remove(i);
+                }
+            playersEnergies.get(getNextTrainer()).remove(energy);
+        }
     }
 
     private void tomarDano(Button button) {
@@ -403,7 +446,7 @@ public class App extends Application {
     private void receberCura(ProgressBar progressBar) {
         int id = Integer.parseInt(progressBar.getId().split(" ")[1]);
         Potion potion = null;
-        for (Potion p : playersPotions.get(getCurrentTrainer())) {
+        for (Potion p : playersPotions.get(getNextTrainer())) {
             switch (p.getName()) {
                 case "Pocao Comum":
                     potion = p;
@@ -429,30 +472,15 @@ public class App extends Application {
         if (potion == null)
             noPotionAvailableError.setVisible(true);
         else {
-            System.out.println("Passei por ali");
+            for (int i = 0; i < playersHand.get(getNextTrainer()).size(); i++)
+                if (playersHand.get(getNextTrainer()).get(i).getId().equals(potion.getId())) {
+                    playersHand.get(getNextTrainer()).get(i).setVisible(false);
+                    playersHand.get(getNextTrainer()).remove(i);
+                }
+            playersPotions.get(getNextTrainer()).remove(potion);
             pokemons[id].receberCura(potion);
             passarAVez();
         }
-
-        // for (Energy e : playersEnergies.get(getCurrentTrainer())) {
-        // switch (e.getName()) {
-        // case "Energia de Fogo":
-        // System.out.println(e);
-        // break;
-
-        // case "Energia de Agua":
-        // System.out.println(e);
-        // break;
-
-        // case "Energia de Grama":
-        // System.out.println(e);
-        // break;
-
-        // default:
-        // System.out.println("e => Tenho uma " + e);
-        // break;
-        // }
-        // }
     }
 
     private void passarAVez() {
@@ -469,6 +497,7 @@ public class App extends Application {
 
         noPokemonSelectedError.setVisible(false);
         noPotionAvailableError.setVisible(false);
+        noEnergyAvailableError.setVisible(false);
 
         for (Label label : labels)
             label.setTextFill(Color.BLACK);
@@ -498,14 +527,14 @@ public class App extends Application {
         int i = 0;
         for (ImageView iv : playersHand.get(getCurrentTrainer())) {
             iv.setX(900 + i * 35);
-            iv.setVisible(false);
+            iv.setVisible(!getCurrentRound());
             i++;
         }
 
         i = 0;
         for (ImageView iv : playersHand.get(getNextTrainer())) {
             iv.setX(900 + i * 35);
-            iv.setVisible(true);
+            iv.setVisible(getCurrentRound());
             i++;
         }
 
