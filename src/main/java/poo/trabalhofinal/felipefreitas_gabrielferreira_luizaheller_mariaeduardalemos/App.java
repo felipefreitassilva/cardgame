@@ -527,14 +527,14 @@ public class App extends Application {
         int i = 0;
         for (ImageView iv : playersHand.get(getCurrentTrainer())) {
             iv.setX(900 + i * 35);
-            iv.setVisible(!getCurrentRound());
+            iv.setVisible(false);
             i++;
         }
 
         i = 0;
         for (ImageView iv : playersHand.get(getNextTrainer())) {
             iv.setX(900 + i * 35);
-            iv.setVisible(getCurrentRound());
+            iv.setVisible(true);
             i++;
         }
 
