@@ -362,6 +362,7 @@ public class App extends Application {
                     if (energy == null)
                         cardNull = true;
                     else {
+                        /** Save card's image and value */
                         energy.setId(energy.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
                         currentCard = new ImageView(Util.generateImage(energy.getImageName()));
                         currentCard.setId(energy.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
@@ -372,6 +373,7 @@ public class App extends Application {
                     if (potion == null)
                         cardNull = true;
                     else {
+                        /** Save card's image and value */
                         potion.setId(potion.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
                         currentCard = new ImageView(Util.generateImage(potion.getImageName()));
                         currentCard.setId(potion.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
@@ -391,6 +393,7 @@ public class App extends Application {
                 include(currentCard);
             }
 
+            /** Animation for disappearing deck */
             if (baralho.size() < 4)
                 ivCardBacks[baralho.size()].setVisible(false);
         }
@@ -423,6 +426,7 @@ public class App extends Application {
             faintedPokemon.setVisible(true);
         } else {
             Energy energy = null;
+            /** Iterate over all of the player energies and get the last */
             for (Energy e : playersEnergies.get(getCurrentTrainer())) {
                 switch (e.getName()) {
                     case "Energia de Fogo":
@@ -445,9 +449,11 @@ public class App extends Application {
             if (energy == null)
                 noEnergyAvailable.setVisible(true);
             else {
+                /** Iterate over his hand (images) backwards to catch the last one */
                 for (int i = playersHand.get(getCurrentTrainer()).size() - 1; i >= 0; i--) {
                     if ((attacker.getType() == energy.getType())
                             && (playersHand.get(getCurrentTrainer()).get(i).getId().equals(energy.getId()))) {
+                        /** If the image is the same as the value for the switch, remove them */
                         playersHand.get(getCurrentTrainer()).get(i).setVisible(false);
                         playersHand.get(getCurrentTrainer()).remove(i);
                         playersEnergies.get(getCurrentTrainer()).remove(energy);
@@ -489,6 +495,7 @@ public class App extends Application {
     private void receberCura(ProgressBar progressBar) {
         int id = Integer.parseInt(progressBar.getId().split(" ")[1]);
         Potion potion = null;
+        /** Iterate over all of the player potions and get the last */
         for (Potion p : playersPotions.get(getCurrentTrainer())) {
             switch (p.getName()) {
                 case "Pocao Comum":
@@ -515,8 +522,10 @@ public class App extends Application {
         if (potion == null)
             noPotionAvailable.setVisible(true);
         else {
+            /** Iterate over his hand (images) */
             for (int i = 0; i < playersHand.get(getCurrentTrainer()).size(); i++)
                 if (playersHand.get(getCurrentTrainer()).get(i).getId().equals(potion.getId())) {
+                    /** If the image is the same as the value for the switch, remove them */
                     playersHand.get(getCurrentTrainer()).get(i).setVisible(false);
                     playersHand.get(getCurrentTrainer()).remove(i);
                 }
@@ -560,7 +569,7 @@ public class App extends Application {
         for (Label label : labels)
             label.setTextFill(Color.BLACK);
 
-        /** Mostrar Botões */
+        /** Alternar botões de atacar/ser atacado de acordo com a paridade do round */
         if (getCurrentRound()) {
             for (int i = 0; i < 3; i++) {
                 buttonBaseAttacks[i].setVisible(true);
@@ -581,7 +590,7 @@ public class App extends Application {
             }
         }
 
-        /** Mostrar Mãos */
+        /** Toggle hand visibility */
         int i = 0;
         for (ImageView iv : playersHand.get(getCurrentTrainer())) {
             iv.setX(900 + i * 35);
@@ -596,6 +605,7 @@ public class App extends Application {
             i++;
         }
 
+        /** Re-render health bars according to last action performed */
         int idPB;
         double HPPokemon;
         for (ProgressBar pb : HPProgressBars) {
