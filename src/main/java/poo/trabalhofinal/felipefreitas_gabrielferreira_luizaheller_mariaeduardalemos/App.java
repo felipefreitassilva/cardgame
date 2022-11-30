@@ -40,7 +40,7 @@ public class App extends Application {
 
     /** Utils */
     private final Pokemon[] pokemons = new Pokemon[6];
-    private final Baralho baralho = new Baralho();
+    private Baralho baralho = new Baralho();
     private static final String TRAINER1 = "Treinador 1";
     private static final String TRAINER2 = "Treinador 2";
     private Map<String, List<ImageView>> playersHand = new HashMap<>();
@@ -627,6 +627,7 @@ public class App extends Application {
         try {
             root = new AnchorPane();
             nroRodada = 1;
+            baralho = new Baralho();
             start(stage);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
