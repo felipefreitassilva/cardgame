@@ -3,7 +3,7 @@ package poo.trabalhofinal.felipefreitas_gabrielferreira_luizaheller_mariaeduarda
 public interface IPokemon {
     void receberDano(int amount);
 
-    void receberCura(int amount);
+    void receberCura(Potion p);
 
     boolean isFainted();
 }

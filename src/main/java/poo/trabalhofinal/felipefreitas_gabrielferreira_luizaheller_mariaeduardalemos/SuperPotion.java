@@ -2,6 +2,6 @@ package poo.trabalhofinal.felipefreitas_gabrielferreira_luizaheller_mariaeduarda
 
 public class SuperPotion extends Potion {
     public SuperPotion() {
-        super("Super Poção", "Azul");
+        super("Super Pocao", "superPotion.png", 50, "Azul");
     }
 }
