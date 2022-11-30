@@ -15,6 +15,7 @@ public class Baralho {
 
     private void shuffle() {
         Random r = new Random();
+        boolean inseridoMaxRevive = false;
         for (int i = 0; i < 18; i++) {
             switch (r.nextInt(3)) {
                 case 0:
@@ -32,8 +33,11 @@ public class Baralho {
                 default:
                     break;
             }
+            if (!inseridoMaxRevive && r.nextBoolean()) {
+                pocoes.push(new MaxRevive());
+                inseridoMaxRevive = true;
+            }
         }
-        pocoes.push(new MaxRevive());
 
         for (int i = 0; i < 15; i++) {
             switch (r.nextInt(3)) {
@@ -69,6 +73,10 @@ public class Baralho {
 
     public int size() {
         return pocoes.size() + energias.size();
+    }
+
+    public boolean isEmpty() {
+        return size() == 0;
     }
 
     public String toString() {

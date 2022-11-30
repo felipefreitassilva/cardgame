@@ -1,6 +1,7 @@
 package poo.trabalhofinal.felipefreitas_gabrielferreira_luizaheller_mariaeduardalemos;
 
 public abstract class Potion extends Card {
+    private String id;
     private int cura;
     private String cor;
 
@@ -8,6 +9,14 @@ public abstract class Potion extends Card {
         super(name, imageName);
         this.cura = cura;
         this.cor = cor;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public int getCura() {

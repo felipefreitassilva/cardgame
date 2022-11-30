@@ -2,6 +2,7 @@ package poo.trabalhofinal.felipefreitas_gabrielferreira_luizaheller_mariaeduarda
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -18,16 +19,43 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 
 public class App extends Application {
-    private final AnchorPane root = new AnchorPane();
+    /** Java FX Variables */
+    private AnchorPane root = new AnchorPane();
     private Stage stage = new Stage();
+    private Stage finalStage = new Stage();
+    private Label finalLabel = new Label();
+    private Button restartButton = new Button();
 
+    /** Stage Grid */
+    private static final int TRAINER1_BASELINE = 110;
+    private static final int TRAINER2_BASELINE = 430;
+    private static final int CARDS_SPACE_BETWEEN = 220;
+    private static final int CARDS_MARGIN_LEFT = 260;
+
+    /** Utils */
     private final Pokemon[] pokemons = new Pokemon[6];
     private final Baralho baralho = new Baralho();
+    private static final String TRAINER1 = "Treinador 1";
+    private static final String TRAINER2 = "Treinador 2";
+    private Map<String, List<ImageView>> playersHand = new HashMap<>();
+    private Map<String, List<Potion>> playersPotions = new HashMap<>();
+    private Map<String, List<Energy>> playersEnergies = new HashMap<>();
 
+    /** Round Variables */
+    private int nroRodada = 1;
+    private Attack attack;
+    private Pokemon attacker;
+    private Pokemon defender;
+
+    /** Pokemons JavaFX components */
     private ImageView[] ivCardBacks = new ImageView[4];
     private Label labelTrainer;
     private Label[] labels = new Label[6];
@@ -39,21 +67,20 @@ public class App extends Application {
     private ProgressBar[] HPProgressBars = new ProgressBar[6];
     private Label[] HPLabels = new Label[6];
 
-    private Label labelWarning;
-
-    private Attack attack;
-    private Pokemon attacker;
-    private Pokemon defender;
-
-    private int nroRodada = 1;
-    private final int CARD_DISTANCING = 220;
+    /** Error Labels */
+    private Label noPokemonSelected;
+    private Label noPotionAvailable;
+    private Label noEnergyAvailable;
+    private Label wrongEnergy;
+    private Label faintedPokemon;
+    private Label[] errorLabels = new Label[5];
 
     @Override
     public void start(Stage primaryStage) throws IOException {
         /** Included Pokeball Icon to Game Window */
         stage.getIcons().add(Util.generateImage("icon.png"));
-        stage.setResizable(false);
         stage.setTitle("Pokemon Card Game");
+        // stage.setResizable(false);
 
         /** Include Game Rules */
         Label rulesLabel = new Label();
@@ -63,7 +90,7 @@ public class App extends Application {
         rulesLabel.setLayoutY(680);
         rulesLabel.setPrefHeight(15);
         rulesLabel.setCursor(Cursor.HAND);
-        ImageView rulesImg = new ImageView(Util.generateImage("rules.jpg"));
+        ImageView rulesImg = new ImageView(Util.generateImage("regras_pokemon.jpg"));
         VBox rulesRoot = new VBox();
         Button backButton = new Button();
         backButton.setText("Voltar");
@@ -78,12 +105,12 @@ public class App extends Application {
         backButton.setOnMouseClicked(e -> rulesStage.close());
         include(rulesLabel);
 
-        /** Include deck image */
+        /** Include deck images */
         ImageView ivCardBack;
         for (int i = 0; i < 4; i++) {
             ivCardBack = new ImageView(Util.generateImage("cardBack.jpg"));
             ivCardBack.setX(25);
-            ivCardBack.setY(220 + i * 8);
+            ivCardBack.setY(262 + i * 10);
             ivCardBack.setFitHeight(230);
             ivCardBack.setFitWidth(165);
             ivCardBack.setCursor(Cursor.HAND);
@@ -92,8 +119,8 @@ public class App extends Application {
             include(ivCardBack);
         }
 
-        Scanner reader = new Scanner(new File(Util.ASSETS_PATH + "/pokemons.txt"));
         /** Include pokemon for both players */
+        Scanner reader = new Scanner(new File(Util.ASSETS_PATH + "/pokemons.txt"));
         for (int i = 0; i < 6; i++) {
             String line = reader.nextLine();
             String[] lineContent = line.split(",");
@@ -107,6 +134,14 @@ public class App extends Application {
             pokemons[i] = new Pokemon(numero, nome, type, weakness, attacks);
         }
 
+        /** Initialize players hands and items */
+        playersHand.put(TRAINER1, new ArrayList<>());
+        playersHand.put(TRAINER2, new ArrayList<>());
+        playersPotions.put(TRAINER1, new ArrayList<>());
+        playersPotions.put(TRAINER2, new ArrayList<>());
+        playersEnergies.put(TRAINER1, new ArrayList<>());
+        playersEnergies.put(TRAINER2, new ArrayList<>());
+
         /** Create title for whose round it is */
         labelTrainer = new Label();
         labelTrainer.setLayoutX(450);
@@ -115,7 +150,53 @@ public class App extends Application {
         labelTrainer.setFont(new Font(24));
         include(labelTrainer);
 
-        /** Include pokemon images */
+        /** Include pokemon cards */
+        createPokemonCards();
+
+        /** Include label warnings */
+        noPokemonSelected = new Label();
+        noPokemonSelected.setText("Favor selecionar o atacante.");
+        errorLabels[0] = noPokemonSelected;
+        noPotionAvailable = new Label();
+        noPotionAvailable.setText("Você não tem poções disponíveis.");
+        errorLabels[1] = noPotionAvailable;
+        noEnergyAvailable = new Label();
+        noEnergyAvailable.setText("Você não tem energia suficiente.");
+        errorLabels[2] = noEnergyAvailable;
+        wrongEnergy = new Label();
+        wrongEnergy.setText("Energia inválida para este pokemon.");
+        errorLabels[3] = wrongEnergy;
+        faintedPokemon = new Label();
+        faintedPokemon.setText("Este pokemon está incapacitado.");
+        errorLabels[4] = faintedPokemon;
+        int i = 0;
+        for (Label label : errorLabels) {
+            label.setLayoutX(20);
+            label.setLayoutY(540 + i * 20);
+            label.setTextFill(Color.RED);
+            label.setVisible(false);
+            include(label);
+            i++;
+        }
+
+        /** Include Final Stage for Winner */
+        finalStage = new Stage();
+        AnchorPane finalRoot = new AnchorPane();
+        finalLabel.setFont(new Font(24));
+        restartButton.setCursor(Cursor.HAND);
+        restartButton.setText("Deseja iniciar outro duelo?");
+        restartButton.setOnMouseClicked(event -> restartGame(restartButton));
+        finalRoot.getChildren().addAll(finalLabel, restartButton);
+        finalStage.setScene(new Scene(finalRoot, 500, 80));
+        finalStage.setTitle("Jogo Encerrado!");
+        finalStage.getIcons().add(Util.generateImage("icon.png"));
+        finalStage.setResizable(false);
+
+        stage.setScene(new Scene(root, 1280, 720));
+        stage.show();
+    }
+
+    private void createPokemonCards() {
         for (int i = 0; i < pokemons.length; i++) {
             ImageView pokemonImageView;
             Label label;
@@ -127,7 +208,7 @@ public class App extends Application {
             Label HPLabel;
             double HPPokemon;
 
-            /** Include static label for pokemon */
+            /** Include static label about pokemon */
             label = new Label();
             HPLabelText = new Label();
             label.setId("label " + i);
@@ -139,33 +220,33 @@ public class App extends Application {
             HPLabelText.setText("HP ");
             if (i < 3) {
                 label.setText(getTrainer1PokemonBaseInfo()[i]);
-                label.setLayoutX(260 + i * CARD_DISTANCING);
-                label.setLayoutY(110);
-                HPLabelText.setLayoutX(260 + i * CARD_DISTANCING);
-                HPLabelText.setLayoutY(370);
+                label.setLayoutX(CARDS_MARGIN_LEFT + i * CARDS_SPACE_BETWEEN);
+                label.setLayoutY(TRAINER1_BASELINE);
+                HPLabelText.setLayoutX(CARDS_MARGIN_LEFT + i * CARDS_SPACE_BETWEEN);
+                HPLabelText.setLayoutY(TRAINER1_BASELINE + 260);
             } else {
                 label.setText(getTrainer2PokemonBaseInfo()[i - 3]);
-                label.setLayoutX(260 + (i - 3) * CARD_DISTANCING);
-                label.setLayoutY(430);
-                HPLabelText.setLayoutX(260 + (i - 3) * CARD_DISTANCING);
-                HPLabelText.setLayoutY(670);
+                label.setLayoutX(CARDS_MARGIN_LEFT + (i - 3) * CARDS_SPACE_BETWEEN);
+                label.setLayoutY(TRAINER2_BASELINE);
+                HPLabelText.setLayoutX(CARDS_MARGIN_LEFT + (i - 3) * CARDS_SPACE_BETWEEN);
+                HPLabelText.setLayoutY(TRAINER2_BASELINE + 240);
             }
             labels[i] = label;
             include(label);
             HPLabelTexts[i] = HPLabelText;
             include(HPLabelText);
 
-            /** Create poke cards */
+            /** Include pokemon images */
             pokemonImageView = new ImageView(Util.generateImage(pokemons[i].getName().toLowerCase() + ".png"));
             pokemonImageView.setId("pokemonImageView " + i);
             pokemonImageView.setFitWidth(150);
             pokemonImageView.setFitHeight(200);
             if (i < 3) {
-                pokemonImageView.setX(250 + i * CARD_DISTANCING);
-                pokemonImageView.setY(140);
+                pokemonImageView.setX(CARDS_MARGIN_LEFT + i * CARDS_SPACE_BETWEEN);
+                pokemonImageView.setY(TRAINER1_BASELINE + 30);
             } else {
-                pokemonImageView.setX(250 + (i - 3) * CARD_DISTANCING);
-                pokemonImageView.setY(450);
+                pokemonImageView.setX(CARDS_MARGIN_LEFT + (i - 3) * CARDS_SPACE_BETWEEN);
+                pokemonImageView.setY(TRAINER2_BASELINE + 20);
             }
             pokemonImageViews[i] = pokemonImageView;
             include(pokemonImageView);
@@ -180,12 +261,12 @@ public class App extends Application {
                     event -> handleBaseAttackClick(
                             buttonBaseAttacks[Integer.parseInt(buttonBaseAttack.getId().split(" ")[1])]));
             if (i < 3) {
-                buttonBaseAttack.setLayoutX(260 + i * CARD_DISTANCING);
-                buttonBaseAttack.setLayoutY(290);
-                buttonBaseAttack.setVisible(false);
+                buttonBaseAttack.setLayoutX(CARDS_MARGIN_LEFT + i * CARDS_SPACE_BETWEEN);
+                buttonBaseAttack.setLayoutY(TRAINER1_BASELINE + 180);
             } else {
-                buttonBaseAttack.setLayoutX(260 + (i - 3) * CARD_DISTANCING);
-                buttonBaseAttack.setLayoutY(590);
+                buttonBaseAttack.setLayoutX(CARDS_MARGIN_LEFT + (i - 3) * CARDS_SPACE_BETWEEN);
+                buttonBaseAttack.setLayoutY(TRAINER2_BASELINE + 160);
+                buttonBaseAttack.setVisible(false);
             }
             buttonBaseAttacks[i] = buttonBaseAttack;
             include(buttonBaseAttack);
@@ -199,12 +280,12 @@ public class App extends Application {
                     buttonSpecialAttacks[Integer.parseInt(buttonSpecialAttack.getId().split(" ")[1])]));
             if (i < 3) {
                 buttonSpecialAttack.setText(getTrainer1Pokemon()[i].getSpecialAttack().getName());
-                buttonSpecialAttack.setLayoutX(260 + i * CARD_DISTANCING);
-                buttonSpecialAttack.setLayoutY(330);
+                buttonSpecialAttack.setLayoutX(CARDS_MARGIN_LEFT + i * CARDS_SPACE_BETWEEN);
+                buttonSpecialAttack.setLayoutY(TRAINER1_BASELINE + 220);
             } else {
                 buttonSpecialAttack.setText(getTrainer2Pokemon()[i - 3].getSpecialAttack().getName());
-                buttonSpecialAttack.setLayoutX(260 + (i - 3) * CARD_DISTANCING);
-                buttonSpecialAttack.setLayoutY(630);
+                buttonSpecialAttack.setLayoutX(CARDS_MARGIN_LEFT + (i - 3) * CARDS_SPACE_BETWEEN);
+                buttonSpecialAttack.setLayoutY(TRAINER2_BASELINE + 200);
             }
             buttonSpecialAttacks[i] = buttonSpecialAttack;
             include(buttonSpecialAttack);
@@ -218,12 +299,12 @@ public class App extends Application {
             buttonChooseAttacked.setOnMouseClicked(event -> tomarDano(
                     buttonChooseAttackeds[Integer.parseInt(buttonChooseAttacked.getId().split(" ")[1])]));
             if (i < 3) {
-                buttonChooseAttacked.setLayoutX(260 + i * CARD_DISTANCING);
-                buttonChooseAttacked.setLayoutY(330);
-            } else {
-                buttonChooseAttacked.setLayoutX(260 + (i - 3) * CARD_DISTANCING);
-                buttonChooseAttacked.setLayoutY(630);
+                buttonChooseAttacked.setLayoutX(CARDS_MARGIN_LEFT + i * CARDS_SPACE_BETWEEN);
+                buttonChooseAttacked.setLayoutY(TRAINER1_BASELINE + 220);
                 buttonChooseAttacked.setVisible(false);
+            } else {
+                buttonChooseAttacked.setLayoutX(CARDS_MARGIN_LEFT + (i - 3) * CARDS_SPACE_BETWEEN);
+                buttonChooseAttacked.setLayoutY(TRAINER2_BASELINE + 200);
             }
             buttonChooseAttackeds[i] = buttonChooseAttacked;
             include(buttonChooseAttacked);
@@ -239,17 +320,20 @@ public class App extends Application {
             HPLabel.prefHeight(10);
             if (i < 3) {
                 HPPokemon = getTrainer1Pokemon()[i].getHealthPoints();
-                HPProgressBar.setLayoutX(280 + i * CARD_DISTANCING);
-                HPProgressBar.setLayoutY(370);
-                HPLabel.setLayoutX(380 + i * CARD_DISTANCING);
-                HPLabel.setLayoutY(370);
+                HPProgressBar.setLayoutX(CARDS_MARGIN_LEFT + 20 + i * CARDS_SPACE_BETWEEN);
+                HPProgressBar.setLayoutY(TRAINER1_BASELINE + 260);
+                HPLabel.setLayoutX((CARDS_MARGIN_LEFT + 130) + i * CARDS_SPACE_BETWEEN);
+                HPLabel.setLayoutY(TRAINER1_BASELINE + 260);
             } else {
                 HPPokemon = getTrainer2Pokemon()[i - 3].getHealthPoints();
-                HPProgressBar.setLayoutX(280 + (i - 3) * CARD_DISTANCING);
-                HPProgressBar.setLayoutY(670);
-                HPLabel.setLayoutX(380 + (i - 3) * CARD_DISTANCING);
-                HPLabel.setLayoutY(670);
+                HPProgressBar.setLayoutX(CARDS_MARGIN_LEFT + 20 + (i - 3) * CARDS_SPACE_BETWEEN);
+                HPProgressBar.setLayoutY(TRAINER2_BASELINE + 240);
+                HPLabel.setLayoutX((CARDS_MARGIN_LEFT + 130) + (i - 3) * CARDS_SPACE_BETWEEN);
+                HPLabel.setLayoutY(TRAINER2_BASELINE + 240);
             }
+            HPProgressBar.setCursor(Cursor.HAND);
+            HPProgressBar.setOnMouseClicked(event -> receberCura(
+                    HPProgressBars[Integer.parseInt(HPProgressBar.getId().split(" ")[1])]));
             HPProgressBar.setProgress(HPPokemon / 100);
             HPLabel.setText(" " + HPPokemon);
             if (HPPokemon >= 70) {
@@ -264,44 +348,53 @@ public class App extends Application {
             HPLabels[i] = HPLabel;
             include(HPLabel);
         }
-
-        /** Include label warning */
-        labelWarning = new Label();
-        labelWarning.setText("Favor selecionar o pokemon.");
-        labelWarning.setLayoutX(35);
-        labelWarning.setLayoutY(500);
-        labelWarning.setVisible(false);
-        include(labelWarning);
-
-        stage.setScene(new Scene(root, 1280, 720));
-        stage.show();
     }
 
     EventHandler<MouseEvent> handleDeckClick = event -> {
-        if (baralho.size() > 0) {
+        if (baralho.isEmpty())
+            ivCardBacks[0].setVisible(false);
+        else {
             boolean cardNull;
+            ImageView currentCard = null;
             do {
                 cardNull = false;
-                /* 50/50 */
+                /* 50/50 for getting either energy or potion */
                 if (new Random().nextBoolean()) {
                     Energy energy = baralho.getEnergy();
-                    if (energy != null)
-                        System.out.println(energy);
-                    else
+                    if (energy == null)
                         cardNull = true;
+                    else {
+                        energy.setId(energy.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
+                        currentCard = new ImageView(Util.generateImage(energy.getImageName()));
+                        currentCard.setId(energy.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
+                        playersEnergies.get(getCurrentTrainer()).add(energy);
+                    }
                 } else {
                     Potion potion = baralho.getPotion();
-                    if (potion != null)
-                        System.out.println(potion);
-                    else
+                    if (potion == null)
                         cardNull = true;
+                    else {
+                        potion.setId(potion.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
+                        currentCard = new ImageView(Util.generateImage(potion.getImageName()));
+                        currentCard.setId(potion.getName() + "  " + nroRodada + "  " + getCurrentTrainer());
+                        playersPotions.get(getCurrentTrainer()).add(potion);
+                    }
                 }
             } while (cardNull);
+
+            if (currentCard != null) {
+                if (getCurrentRound())
+                    currentCard.setY(TRAINER1_BASELINE + 40);
+                else
+                    currentCard.setY(TRAINER2_BASELINE + 20);
+                currentCard.setFitWidth(165);
+                currentCard.setFitHeight(210);
+                playersHand.get(getCurrentTrainer()).add(currentCard);
+                include(currentCard);
+            }
+
             if (baralho.size() < 4)
                 ivCardBacks[baralho.size()].setVisible(false);
-        } else {
-            ivCardBacks[0].setVisible(false);
-            System.out.println("Acabou o deck");
         }
 
         passarAVez();
@@ -310,25 +403,79 @@ public class App extends Application {
     private void handleBaseAttackClick(Button button) {
         int id = Integer.parseInt(button.getId().split(" ")[1]);
         attacker = pokemons[id];
-        attack = attacker.getBaseAttack();
 
-        for (Label label : labels)
-            label.setTextFill(Color.BLACK);
-        labels[id].setTextFill(Color.RED);
+        if (attacker.isFainted()) {
+            attacker = null;
+            faintedPokemon.setVisible(true);
+        } else {
+            attack = attacker.getBaseAttack();
+
+            for (Label label : labels)
+                label.setTextFill(Color.BLACK);
+            labels[id].setTextFill(Color.RED);
+        }
     }
 
     private void handleSpecialAttackClick(Button button) {
         int id = Integer.parseInt(button.getId().split(" ")[1]);
         attacker = pokemons[id];
-        attack = attacker.getSpecialAttack();
 
-        for (Label label : labels)
-            label.setTextFill(Color.BLACK);
-        labels[id].setTextFill(Color.RED);
+        if (attacker.isFainted()) {
+            attacker = null;
+            faintedPokemon.setVisible(true);
+        } else {
+            Energy energy = null;
+            for (Energy e : playersEnergies.get(getCurrentTrainer())) {
+                switch (e.getName()) {
+                    case "Energia de Fogo":
+                        energy = e;
+                        break;
+
+                    case "Energia de Agua":
+                        energy = e;
+                        break;
+
+                    case "Energia de Grama":
+                        energy = e;
+                        break;
+
+                    default:
+                        System.out.println("e => Tenho uma " + e);
+                        break;
+                }
+            }
+            if (energy == null)
+                noEnergyAvailable.setVisible(true);
+            else {
+                for (int i = playersHand.get(getCurrentTrainer()).size() - 1; i >= 0; i--) {
+                    if ((attacker.getType() == energy.getType())
+                            && (playersHand.get(getCurrentTrainer()).get(i).getId().equals(energy.getId()))) {
+                        playersHand.get(getCurrentTrainer()).get(i).setVisible(false);
+                        playersHand.get(getCurrentTrainer()).remove(i);
+                        playersEnergies.get(getCurrentTrainer()).remove(energy);
+
+                        attack = attacker.getSpecialAttack();
+
+                        for (Label label : labels)
+                            label.setTextFill(Color.BLACK);
+                        labels[id].setTextFill(Color.RED);
+
+                        break;
+                    } else {
+                        wrongEnergy.setVisible(true);
+                        attacker = null;
+                    }
+
+                    attacker = pokemons[id];
+                }
+            }
+        }
     }
 
     private void tomarDano(Button button) {
-        if (attacker != null) {
+        if (attacker == null)
+            noPokemonSelected.setVisible(true);
+        else {
             int id = Integer.parseInt(button.getId().split(" ")[1]);
             defender = pokemons[id];
 
@@ -337,56 +484,161 @@ public class App extends Application {
             else
                 defender.receberDano(attacker, attack);
 
-            HPProgressBars[id].setProgress(defender.getHealthPoints() / 100);
-            HPLabels[id].setText(" " + defender.getHealthPoints());
-            if (defender.getHealthPoints() >= 70) {
-                HPProgressBars[id].setStyle("-fx-accent: #00b31e !important;");
-            } else if (defender.getHealthPoints() >= 40) {
-                HPProgressBars[id].setStyle("-fx-accent: #DD0 !important;");
-            } else {
-                HPProgressBars[id].setStyle("-fx-accent: red !important;");
-            }
-
             passarAVez();
-        } else {
-            labelWarning.setVisible(true);
-            ;
+        }
+    }
+
+    private void receberCura(ProgressBar progressBar) {
+        int id = Integer.parseInt(progressBar.getId().split(" ")[1]);
+        Potion potion = null;
+        for (Potion p : playersPotions.get(getCurrentTrainer())) {
+            switch (p.getName()) {
+                case "Pocao Comum":
+                    potion = p;
+                    break;
+
+                case "Hiper Pocao":
+                    potion = p;
+                    break;
+
+                case "Super Pocao":
+                    potion = p;
+                    break;
+
+                case "Max Revive":
+                    potion = p;
+                    break;
+
+                default:
+                    System.out.println("e => Tenho um " + p);
+                    break;
+            }
+        }
+        if (potion == null)
+            noPotionAvailable.setVisible(true);
+        else {
+            for (int i = 0; i < playersHand.get(getCurrentTrainer()).size(); i++)
+                if (playersHand.get(getCurrentTrainer()).get(i).getId().equals(potion.getId())) {
+                    playersHand.get(getCurrentTrainer()).get(i).setVisible(false);
+                    playersHand.get(getCurrentTrainer()).remove(i);
+                }
+            playersPotions.get(getCurrentTrainer()).remove(potion);
+            pokemons[id].receberCura(potion);
+            passarAVez();
         }
     }
 
     private void passarAVez() {
         nroRodada++;
+        int healthyPokemon = 3;
+        if (getCurrentTrainer().equals(TRAINER1)) {
+            for (Pokemon p1 : getTrainer1Pokemon())
+                if (p1.isFainted())
+                    healthyPokemon--;
+        } else
+            for (Pokemon p2 : getTrainer2Pokemon())
+                if (p2.isFainted())
+                    healthyPokemon--;
+
+        if (healthyPokemon == 0) {
+            finalLabel.setText(getNextTrainer() + " ganhou em um total de " + (nroRodada - 1) + " rodadas");
+            restartButton.setLayoutX(160);
+            restartButton.setLayoutY(40);
+            finalStage.show();
+        } else
+            novaRodada();
+    }
+
+    private void novaRodada() {
+        labelTrainer.setText("Rodada " + nroRodada + "\nVez do: " + getCurrentTrainer());
+
         attack = null;
         attacker = null;
         defender = null;
-        labelWarning.setVisible(false);
 
-        labelTrainer.setText("Rodada " + nroRodada + "\nVez do: " + getCurrentTrainer());
+        for (Label label : errorLabels)
+            label.setVisible(false);
 
         for (Label label : labels)
             label.setTextFill(Color.BLACK);
 
+        /** Mostrar Botões */
         if (getCurrentRound()) {
             for (int i = 0; i < 3; i++) {
+                buttonBaseAttacks[i].setVisible(true);
+                buttonChooseAttackeds[i].setVisible(false);
+            }
+            for (int i = 3; i < 6; i++) {
                 buttonBaseAttacks[i].setVisible(false);
                 buttonChooseAttackeds[i].setVisible(true);
             }
         } else {
+            for (int i = 0; i < 3; i++) {
+                buttonBaseAttacks[i].setVisible(false);
+                buttonChooseAttackeds[i].setVisible(true);
+            }
             for (int i = 3; i < 6; i++) {
                 buttonBaseAttacks[i].setVisible(true);
                 buttonChooseAttackeds[i].setVisible(false);
             }
         }
+
+        /** Mostrar Mãos */
+        int i = 0;
+        for (ImageView iv : playersHand.get(getCurrentTrainer())) {
+            iv.setX(900 + i * 35);
+            iv.setVisible(true);
+            i++;
+        }
+
+        i = 0;
+        for (ImageView iv : playersHand.get(getNextTrainer())) {
+            iv.setX(900 + i * 35);
+            iv.setVisible(false);
+            i++;
+        }
+
+        int idPB;
+        double HPPokemon;
+        for (ProgressBar pb : HPProgressBars) {
+            idPB = Integer.parseInt(pb.getId().split(" ")[1]);
+            HPPokemon = pokemons[idPB].getHealthPoints();
+            pb.setProgress(HPPokemon / 100);
+            HPLabels[idPB].setText(" " + HPPokemon);
+            if (HPPokemon >= 70) {
+                pb.setStyle("-fx-accent: #00b31e;");
+            } else if (HPPokemon >= 40) {
+                pb.setStyle("-fx-accent: #DD0;");
+            } else {
+                pb.setStyle("-fx-accent: red;");
+            }
+        }
+    }
+
+    private void restartGame(Button button) {
+        try {
+            root = new AnchorPane();
+            nroRodada = 1;
+            start(stage);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private boolean getCurrentRound() {
-        return nroRodada % 2 == 0;
+        return nroRodada % 2 != 0;
     }
 
     private String getCurrentTrainer() {
         if (getCurrentRound())
-            return "Treinador 2";
-        return "Treinador 1";
+            return TRAINER1;
+        return TRAINER2;
+    }
+
+    private String getNextTrainer() {
+        if (!getCurrentRound())
+            return TRAINER1;
+        return TRAINER2;
     }
 
     private Pokemon[] getTrainer1Pokemon() {
