@@ -38,15 +38,15 @@ public class Baralho {
         for (int i = 0; i < 15; i++) {
             switch (r.nextInt(3)) {
                 case 0:
-                    energias.push(new Energy("Energia de Água", Type.WATER));
+                    energias.push(new Energy("Energia de Agua", "waterEnergy.jpg", Type.WATER));
                     break;
 
                 case 1:
-                    energias.push(new Energy("Energia de Fogo", Type.FIRE));
+                    energias.push(new Energy("Energia de Fogo", "fireEnergy.jpg", Type.FIRE));
                     break;
 
                 case 2:
-                    energias.push(new Energy("Energia de Grama", Type.GRASS));
+                    energias.push(new Energy("Energia de Grama", "grassEnergy.jpg", Type.GRASS));
                     break;
 
                 default:
@@ -56,11 +56,15 @@ public class Baralho {
     }
 
     public Potion getPotion() {
-        return pocoes.pop();
+        if (pocoes.size() > 0)
+            return pocoes.pop();
+        return null;
     }
 
     public Energy getEnergy() {
-        return energias.pop();
+        if (energias.size() > 0)
+            return energias.pop();
+        return null;
     }
 
     public int size() {
