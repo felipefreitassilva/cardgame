@@ -2,6 +2,7 @@ package poo.trabalhofinal.felipefreitas_gabrielferreira_luizaheller_mariaeduarda
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -27,8 +28,11 @@ import java.util.Scanner;
 
 public class App extends Application {
     /** Java FX Variables */
-    private final AnchorPane root = new AnchorPane();
+    private AnchorPane root = new AnchorPane();
     private Stage stage = new Stage();
+    private Stage finalStage = new Stage();
+    private Label finalLabel = new Label();
+    private Button restartButton = new Button();
 
     /** Stage Grid */
     private static final int TRAINER1_BASELINE = 110;
@@ -63,9 +67,13 @@ public class App extends Application {
     private ProgressBar[] HPProgressBars = new ProgressBar[6];
     private Label[] HPLabels = new Label[6];
 
-    private Label noPokemonSelectedError;
-    private Label noPotionAvailableError;
-    private Label noEnergyAvailableError;
+    /** Error Labels */
+    private Label noPokemonSelected;
+    private Label noPotionAvailable;
+    private Label noEnergyAvailable;
+    private Label wrongEnergy;
+    private Label faintedPokemon;
+    private Label[] errorLabels = new Label[5];
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -102,7 +110,7 @@ public class App extends Application {
         for (int i = 0; i < 4; i++) {
             ivCardBack = new ImageView(Util.generateImage("cardBack.jpg"));
             ivCardBack.setX(25);
-            ivCardBack.setY(220 + i * 8);
+            ivCardBack.setY(262 + i * 10);
             ivCardBack.setFitHeight(230);
             ivCardBack.setFitWidth(165);
             ivCardBack.setCursor(Cursor.HAND);
@@ -146,27 +154,43 @@ public class App extends Application {
         createPokemonCards();
 
         /** Include label warnings */
-        noPokemonSelectedError = new Label();
-        noPokemonSelectedError.setText("Favor selecionar o pokemon.");
-        noPokemonSelectedError.setLayoutX(20);
-        noPokemonSelectedError.setLayoutY(500);
-        noPokemonSelectedError.setTextFill(Color.RED);
-        noPokemonSelectedError.setVisible(false);
-        include(noPokemonSelectedError);
-        noPotionAvailableError = new Label();
-        noPotionAvailableError.setText("Você não tem poções disponíveis.");
-        noPotionAvailableError.setLayoutX(20);
-        noPotionAvailableError.setLayoutY(520);
-        noPotionAvailableError.setTextFill(Color.RED);
-        noPotionAvailableError.setVisible(false);
-        include(noPotionAvailableError);
-        noEnergyAvailableError = new Label();
-        noEnergyAvailableError.setText("Você não tem energia suficiente.");
-        noEnergyAvailableError.setLayoutX(20);
-        noEnergyAvailableError.setLayoutY(540);
-        noEnergyAvailableError.setTextFill(Color.RED);
-        noEnergyAvailableError.setVisible(false);
-        include(noEnergyAvailableError);
+        noPokemonSelected = new Label();
+        noPokemonSelected.setText("Favor selecionar o atacante.");
+        errorLabels[0] = noPokemonSelected;
+        noPotionAvailable = new Label();
+        noPotionAvailable.setText("Você não tem poções disponíveis.");
+        errorLabels[1] = noPotionAvailable;
+        noEnergyAvailable = new Label();
+        noEnergyAvailable.setText("Você não tem energia suficiente.");
+        errorLabels[2] = noEnergyAvailable;
+        wrongEnergy = new Label();
+        wrongEnergy.setText("Energia inválida para este pokemon.");
+        errorLabels[3] = wrongEnergy;
+        faintedPokemon = new Label();
+        faintedPokemon.setText("Este pokemon está incapacitado.");
+        errorLabels[4] = faintedPokemon;
+        int i = 0;
+        for (Label label : errorLabels) {
+            label.setLayoutX(20);
+            label.setLayoutY(540 + i * 20);
+            label.setTextFill(Color.RED);
+            label.setVisible(false);
+            include(label);
+            i++;
+        }
+
+        /** Include Final Stage for Winner */
+        finalStage = new Stage();
+        AnchorPane finalRoot = new AnchorPane();
+        finalLabel.setFont(new Font(24));
+        restartButton.setCursor(Cursor.HAND);
+        restartButton.setText("Deseja iniciar outro duelo?");
+        restartButton.setOnMouseClicked(event -> restartGame(restartButton));
+        finalRoot.getChildren().addAll(finalLabel, restartButton);
+        finalStage.setScene(new Scene(finalRoot, 500, 80));
+        finalStage.setTitle("Jogo Encerrado!");
+        finalStage.getIcons().add(Util.generateImage("icon.png"));
+        finalStage.setResizable(false);
 
         stage.setScene(new Scene(root, 1280, 720));
         stage.show();
@@ -239,10 +263,10 @@ public class App extends Application {
             if (i < 3) {
                 buttonBaseAttack.setLayoutX(CARDS_MARGIN_LEFT + i * CARDS_SPACE_BETWEEN);
                 buttonBaseAttack.setLayoutY(TRAINER1_BASELINE + 180);
-                buttonBaseAttack.setVisible(false);
             } else {
                 buttonBaseAttack.setLayoutX(CARDS_MARGIN_LEFT + (i - 3) * CARDS_SPACE_BETWEEN);
                 buttonBaseAttack.setLayoutY(TRAINER2_BASELINE + 160);
+                buttonBaseAttack.setVisible(false);
             }
             buttonBaseAttacks[i] = buttonBaseAttack;
             include(buttonBaseAttack);
@@ -277,10 +301,10 @@ public class App extends Application {
             if (i < 3) {
                 buttonChooseAttacked.setLayoutX(CARDS_MARGIN_LEFT + i * CARDS_SPACE_BETWEEN);
                 buttonChooseAttacked.setLayoutY(TRAINER1_BASELINE + 220);
+                buttonChooseAttacked.setVisible(false);
             } else {
                 buttonChooseAttacked.setLayoutX(CARDS_MARGIN_LEFT + (i - 3) * CARDS_SPACE_BETWEEN);
                 buttonChooseAttacked.setLayoutY(TRAINER2_BASELINE + 200);
-                buttonChooseAttacked.setVisible(false);
             }
             buttonChooseAttackeds[i] = buttonChooseAttacked;
             include(buttonChooseAttacked);
@@ -327,9 +351,9 @@ public class App extends Application {
     }
 
     EventHandler<MouseEvent> handleDeckClick = event -> {
-        if (baralho.isEmpty()) {
+        if (baralho.isEmpty())
             ivCardBacks[0].setVisible(false);
-        } else {
+        else {
             boolean cardNull;
             ImageView currentCard = null;
             do {
@@ -379,57 +403,78 @@ public class App extends Application {
     private void handleBaseAttackClick(Button button) {
         int id = Integer.parseInt(button.getId().split(" ")[1]);
         attacker = pokemons[id];
-        attack = attacker.getBaseAttack();
 
-        for (Label label : labels)
-            label.setTextFill(Color.BLACK);
-        labels[id].setTextFill(Color.RED);
-    }
-
-    private void handleSpecialAttackClick(Button button) {
-        int id = Integer.parseInt(button.getId().split(" ")[1]);
-        Energy energy = null;
-        for (Energy e : playersEnergies.get(getCurrentTrainer())) {
-            switch (e.getName()) {
-                case "Energia de Fogo":
-                    energy = e;
-                    break;
-
-                case "Energia de Agua":
-                    energy = e;
-                    break;
-
-                case "Energia de Grama":
-                    energy = e;
-                    break;
-
-                default:
-                    System.out.println("e => Tenho uma " + e);
-                    break;
-            }
-        }
-        if (energy == null)
-            noEnergyAvailableError.setVisible(true);
-        else {
-            attacker = pokemons[id];
-            attack = attacker.getSpecialAttack();
+        if (attacker.isFainted()) {
+            attacker = null;
+            faintedPokemon.setVisible(true);
+        } else {
+            attack = attacker.getBaseAttack();
 
             for (Label label : labels)
                 label.setTextFill(Color.BLACK);
             labels[id].setTextFill(Color.RED);
+        }
+    }
 
-            for (int i = 0; i < playersHand.get(getNextTrainer()).size(); i++)
-                if (playersHand.get(getNextTrainer()).get(i).getId().equals(energy.getId())) {
-                    playersHand.get(getNextTrainer()).get(i).setVisible(false);
-                    playersHand.get(getNextTrainer()).remove(i);
+    private void handleSpecialAttackClick(Button button) {
+        int id = Integer.parseInt(button.getId().split(" ")[1]);
+        attacker = pokemons[id];
+
+        if (attacker.isFainted()) {
+            attacker = null;
+            faintedPokemon.setVisible(true);
+        } else {
+            Energy energy = null;
+            for (Energy e : playersEnergies.get(getCurrentTrainer())) {
+                switch (e.getName()) {
+                    case "Energia de Fogo":
+                        energy = e;
+                        break;
+
+                    case "Energia de Agua":
+                        energy = e;
+                        break;
+
+                    case "Energia de Grama":
+                        energy = e;
+                        break;
+
+                    default:
+                        System.out.println("e => Tenho uma " + e);
+                        break;
                 }
-            playersEnergies.get(getNextTrainer()).remove(energy);
+            }
+            if (energy == null)
+                noEnergyAvailable.setVisible(true);
+            else {
+                for (int i = playersHand.get(getCurrentTrainer()).size() - 1; i >= 0; i--) {
+                    if ((attacker.getType() == energy.getType())
+                            && (playersHand.get(getCurrentTrainer()).get(i).getId().equals(energy.getId()))) {
+                        playersHand.get(getCurrentTrainer()).get(i).setVisible(false);
+                        playersHand.get(getCurrentTrainer()).remove(i);
+                        playersEnergies.get(getCurrentTrainer()).remove(energy);
+
+                        attack = attacker.getSpecialAttack();
+
+                        for (Label label : labels)
+                            label.setTextFill(Color.BLACK);
+                        labels[id].setTextFill(Color.RED);
+
+                        break;
+                    } else {
+                        wrongEnergy.setVisible(true);
+                        attacker = null;
+                    }
+
+                    attacker = pokemons[id];
+                }
+            }
         }
     }
 
     private void tomarDano(Button button) {
         if (attacker == null)
-            noPokemonSelectedError.setVisible(true);
+            noPokemonSelected.setVisible(true);
         else {
             int id = Integer.parseInt(button.getId().split(" ")[1]);
             defender = pokemons[id];
@@ -446,7 +491,7 @@ public class App extends Application {
     private void receberCura(ProgressBar progressBar) {
         int id = Integer.parseInt(progressBar.getId().split(" ")[1]);
         Potion potion = null;
-        for (Potion p : playersPotions.get(getNextTrainer())) {
+        for (Potion p : playersPotions.get(getCurrentTrainer())) {
             switch (p.getName()) {
                 case "Pocao Comum":
                     potion = p;
@@ -470,14 +515,14 @@ public class App extends Application {
             }
         }
         if (potion == null)
-            noPotionAvailableError.setVisible(true);
+            noPotionAvailable.setVisible(true);
         else {
-            for (int i = 0; i < playersHand.get(getNextTrainer()).size(); i++)
-                if (playersHand.get(getNextTrainer()).get(i).getId().equals(potion.getId())) {
-                    playersHand.get(getNextTrainer()).get(i).setVisible(false);
-                    playersHand.get(getNextTrainer()).remove(i);
+            for (int i = 0; i < playersHand.get(getCurrentTrainer()).size(); i++)
+                if (playersHand.get(getCurrentTrainer()).get(i).getId().equals(potion.getId())) {
+                    playersHand.get(getCurrentTrainer()).get(i).setVisible(false);
+                    playersHand.get(getCurrentTrainer()).remove(i);
                 }
-            playersPotions.get(getNextTrainer()).remove(potion);
+            playersPotions.get(getCurrentTrainer()).remove(potion);
             pokemons[id].receberCura(potion);
             passarAVez();
         }
@@ -485,7 +530,23 @@ public class App extends Application {
 
     private void passarAVez() {
         nroRodada++;
-        novaRodada();
+        int healthyPokemon = 3;
+        if (getCurrentTrainer().equals(TRAINER1)) {
+            for (Pokemon p1 : getTrainer1Pokemon())
+                if (p1.isFainted())
+                    healthyPokemon--;
+        } else
+            for (Pokemon p2 : getTrainer2Pokemon())
+                if (p2.isFainted())
+                    healthyPokemon--;
+
+        if (healthyPokemon == 0) {
+            finalLabel.setText(getNextTrainer() + " ganhou em um total de " + (nroRodada - 1) + " rodadas");
+            restartButton.setLayoutX(160);
+            restartButton.setLayoutY(40);
+            finalStage.show();
+        } else
+            novaRodada();
     }
 
     private void novaRodada() {
@@ -495,9 +556,8 @@ public class App extends Application {
         attacker = null;
         defender = null;
 
-        noPokemonSelectedError.setVisible(false);
-        noPotionAvailableError.setVisible(false);
-        noEnergyAvailableError.setVisible(false);
+        for (Label label : errorLabels)
+            label.setVisible(false);
 
         for (Label label : labels)
             label.setTextFill(Color.BLACK);
@@ -505,21 +565,21 @@ public class App extends Application {
         /** Mostrar Botões */
         if (getCurrentRound()) {
             for (int i = 0; i < 3; i++) {
-                buttonBaseAttacks[i].setVisible(false);
-                buttonChooseAttackeds[i].setVisible(true);
-            }
-            for (int i = 3; i < 6; i++) {
                 buttonBaseAttacks[i].setVisible(true);
                 buttonChooseAttackeds[i].setVisible(false);
+            }
+            for (int i = 3; i < 6; i++) {
+                buttonBaseAttacks[i].setVisible(false);
+                buttonChooseAttackeds[i].setVisible(true);
             }
         } else {
             for (int i = 0; i < 3; i++) {
-                buttonBaseAttacks[i].setVisible(true);
-                buttonChooseAttackeds[i].setVisible(false);
-            }
-            for (int i = 3; i < 6; i++) {
                 buttonBaseAttacks[i].setVisible(false);
                 buttonChooseAttackeds[i].setVisible(true);
+            }
+            for (int i = 3; i < 6; i++) {
+                buttonBaseAttacks[i].setVisible(true);
+                buttonChooseAttackeds[i].setVisible(false);
             }
         }
 
@@ -527,14 +587,14 @@ public class App extends Application {
         int i = 0;
         for (ImageView iv : playersHand.get(getCurrentTrainer())) {
             iv.setX(900 + i * 35);
-            iv.setVisible(false);
+            iv.setVisible(true);
             i++;
         }
 
         i = 0;
         for (ImageView iv : playersHand.get(getNextTrainer())) {
             iv.setX(900 + i * 35);
-            iv.setVisible(true);
+            iv.setVisible(false);
             i++;
         }
 
@@ -552,6 +612,16 @@ public class App extends Application {
             } else {
                 pb.setStyle("-fx-accent: red;");
             }
+        }
+    }
+
+    private void restartGame(Button button) {
+        try {
+            root = new AnchorPane();
+            nroRodada = 1;
+            start(stage);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
