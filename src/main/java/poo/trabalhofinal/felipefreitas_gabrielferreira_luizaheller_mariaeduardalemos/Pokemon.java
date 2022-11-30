@@ -8,7 +8,7 @@ public class Pokemon extends Card implements IPokemon {
     private Attack[] attacks;
 
     public Pokemon(int number, String name, Type type, Type weakness, Attack[] attacks) {
-        super(name, "assets//" + name);
+        super(name, name + ".png");
         this.number = number;
         this.type = type;
         this.weakness = weakness;
@@ -32,6 +32,10 @@ public class Pokemon extends Card implements IPokemon {
         return healthPoints;
     }
 
+    public Attack getBaseAttack() {
+        return attacks[0];
+    }
+
     public Attack getSpecialAttack() {
         return attacks[1];
     }
@@ -48,13 +52,13 @@ public class Pokemon extends Card implements IPokemon {
             healthPoints = 0;
     }
 
-    public void receberCura(int amount) {
-        healthPoints += amount;
+    public void receberCura(Potion p) {
+        healthPoints += p.getCura();
         if (healthPoints > 100)
             healthPoints = 100;
     }
 
-    public void reviver() {
+    public void reviver(MaxRevive maxRevive) {
         this.healthPoints = 100;
     }
 
@@ -64,10 +68,10 @@ public class Pokemon extends Card implements IPokemon {
 
     public double hasAdvantage(Pokemon pokemon) {
         if (this.type == pokemon.getWeakness())
-            return 1.5;
+            return 0.5;
 
         if (this.weakness == pokemon.getType())
-            return 0.5;
+            return 1.5;
 
         return 1;
     }
